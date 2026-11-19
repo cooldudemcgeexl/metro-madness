@@ -11,7 +11,7 @@ frontend:
       commands:
         - pnpm build
   artifacts:
-    baseDirectory: dist
+    baseDirectory: apps/web/dist
     files:
       - "**/*"
   cache:

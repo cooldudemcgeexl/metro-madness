@@ -1,39 +1,26 @@
 {
-  "name": "stl-transit-challenge",
+  "name": "metro-madness",
   "version": "1.0.0",
   "private": true,
-  "description": "Plan a one-day run through every Metro St. Louis transit center using the real GTFS timetable.",
+  "description": "Plan the fastest run through every transit center of a system. Monorepo: the routing library and the Metro St. Louis web app.",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit",
-    "data:build": "tsx scripts/precompute.ts data/gtfs_raw public/data",
-    "test:engine": "tsx scripts/test-engine.ts",
+    "dev": "pnpm --filter @metro-madness/web dev",
+    "build": "pnpm --filter @metro-madness/web build",
+    "preview": "pnpm --filter @metro-madness/web preview",
+    "data:build": "pnpm --filter @metro-madness/web data:build",
+    "test:routes": "pnpm --filter @metro-madness/web test:routes",
+    "typecheck": "tsc -b",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "check": "pnpm typecheck && pnpm lint && pnpm format:check"
   },
-  "dependencies": {
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "zustand": "^5.1.0"
-  },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.5",
-    "@types/node": "^26.6.6",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.3.0",
     "oxfmt": "^0.79.0",
     "oxlint": "^1.94.0",
-    "tailwindcss": "^4.3.5",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.8"
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=22"

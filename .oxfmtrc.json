@@ -1,8 +1,8 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "sortTailwindcss": {
-    "stylesheet": "./src/styles.css",
+    "stylesheet": "./apps/web/src/styles.css",
     "functions": ["cx"]
   },
-  "ignorePatterns": ["public/data", "data", "pnpm-lock.yaml"]
+  "ignorePatterns": ["apps/web/public/data/**", "apps/web/data/**", "pnpm-lock.yaml"]
 }

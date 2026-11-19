@@ -1,0 +1,14 @@
+{
+  "name": "@metro-madness/router",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plan the fastest tour through a set of transit hubs: GTFS travel profiles via Connection Scan, plus a time-dependent tour search.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./build": "./src/build.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -b"
+  }
+}

@@ -13,7 +13,7 @@
     // Only Worker#postMessage is used, which has no targetOrigin.
     "unicorn/require-post-message-target-origin": "off",
     // Sorting/reversing arrays the code just built is intentional; copying would only cost time
-    // (the engine sorts in its hot loop).
+    // (the search sorts in its hot loop).
     "unicorn/no-array-sort": "off",
     "unicorn/no-array-reverse": "off",
     "import/no-unassigned-import": ["warn", { "allow": ["**/*.css"] }]
@@ -22,11 +22,19 @@
     "builtin": true,
     "browser": true
   },
-  "ignorePatterns": ["dist", "public/data"],
+  "ignorePatterns": ["**/dist", "apps/web/public/data"],
   "overrides": [
     {
-      "files": ["scripts/**", "vite.config.ts"],
+      "files": ["apps/web/scripts/**", "apps/web/vite.config.ts"],
       "env": { "browser": false, "node": true }
+    },
+    {
+      // The routing library is meant to be read: no single-letter names (`_` marks unused).
+      "files": ["packages/router/**"],
+      "env": { "browser": false },
+      "rules": {
+        "eslint/id-length": ["error", { "min": 2, "exceptions": ["_"] }]
+      }
     }
   ]
 }
