@@ -1,10 +1,10 @@
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import type { Engine, EngineOpts, SearchResult } from '../engine/engine.ts';
-import { cancelSearch, startSearch } from '../engine/searchClient.ts';
-import { fetchCommon, fetchDay } from '../data/load.ts';
-import type { Common, DayData, DayKey } from '../data/types.ts';
-import { dur, fmt } from '../lib/format.ts';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import type { Engine, EngineOpts, SearchResult } from "../engine/engine.ts";
+import { cancelSearch, startSearch } from "../engine/searchClient.ts";
+import { fetchCommon, fetchDay } from "../data/load.ts";
+import type { Common, DayData, DayKey } from "../data/types.ts";
+import { dur, fmt } from "../lib/format.ts";
 import {
   buildPlan,
   DEFAULT_SETTINGS,
@@ -15,7 +15,7 @@ import {
   type DayCtx,
   type Plan,
   type Settings,
-} from '../lib/plan.ts';
+} from "../lib/plan.ts";
 
 /** Up to three runs can be compared; each holds one color slot. */
 export const MAX_COMPARE = 3;
@@ -71,7 +71,7 @@ interface AppState {
   setStatus: (status: string) => void;
 }
 
-type Persisted = Pick<AppState, 'settings' | 'savedCompare'>;
+type Persisted = Pick<AppState, "settings" | "savedCompare">;
 
 function freeSlot(compare: number[], slots: Record<number, number>): number {
   const used = new Set(compare.map((id) => slots[id]));
@@ -89,13 +89,17 @@ export const useAppStore = create<AppState>()(
       function ensureDay(key: DayKey): Promise<DayCtx> {
         const s = get();
         const common = s.common;
-        if (!common) return Promise.reject(new Error('Schedule data not loaded'));
-        if (s.days[key]) return Promise.resolve({ common, day: s.days[key], engine: s.engines[key] });
+        if (!common) return Promise.reject(new Error("Schedule data not loaded"));
+        if (s.days[key])
+          return Promise.resolve({ common, day: s.days[key], engine: s.engines[key] });
         let p = inflightDays.get(key);
         if (!p) {
           p = fetchDay(key, common)
             .then(({ day, engine }) => {
-              set((st) => ({ days: { ...st.days, [key]: day }, engines: { ...st.engines, [key]: engine } }));
+              set((st) => ({
+                days: { ...st.days, [key]: day },
+                engines: { ...st.engines, [key]: engine },
+              }));
               return { common, day, engine };
             })
             .finally(() => inflightDays.delete(key));
@@ -104,11 +108,19 @@ export const useAppStore = create<AppState>()(
         return p;
       }
 
-      function receiveResults(ctx: DayCtx, results: SearchResult[], st: Settings, o: EngineOpts, auto: boolean) {
+      function receiveResults(
+        ctx: DayCtx,
+        results: SearchResult[],
+        st: Settings,
+        o: EngineOpts,
+        auto: boolean,
+      ) {
         const s = get();
         const plans = { ...s.plans };
         let nextId = s.nextId;
-        const byKey = new Map(Object.values(plans).map((p) => [planKey(p.order, p.t0, p.st, p.o), p.id]));
+        const byKey = new Map(
+          Object.values(plans).map((p) => [planKey(p.order, p.t0, p.st, p.o), p.id]),
+        );
         const ids: number[] = [];
         for (const r of results.slice(0, MAX_RESULTS)) {
           const k = planKey(r.order, r.t0, st, o);
@@ -148,7 +160,7 @@ export const useAppStore = create<AppState>()(
         nextId: 1,
         searching: false,
         progress: 0,
-        status: '',
+        status: "",
         savedCompare: [],
         restored: false,
 
@@ -163,7 +175,8 @@ export const useAppStore = create<AppState>()(
             return;
           }
           let settings = get().settings;
-          if (!common.days.some((d) => d.key === settings.day)) settings = { ...settings, day: common.days[0]?.key ?? 'wk' };
+          if (!common.days.some((d) => d.key === settings.day))
+            settings = { ...settings, day: common.days[0]?.key ?? "wk" };
           set({ common, settings });
           try {
             await ensureDay(settings.day);
@@ -183,10 +196,22 @@ export const useAppStore = create<AppState>()(
               const st = sanitizeSettings(sv.st);
               const order = sv.order.map((id) => common.hubs.findIndex((h) => h.id === id));
               if (order.some((i) => i < 0)) continue; // a hub that no longer exists, or an old index-based save
-              const p = buildPlan(ctx, nextId++, order, sv.t0, st, engineOpts(common, st, ctx.day), sv.label, null);
+              const p = buildPlan(
+                ctx,
+                nextId++,
+                order,
+                sv.t0,
+                st,
+                engineOpts(common, st, ctx.day),
+                sv.label,
+                null,
+              );
               if (!isOk(p) || compare.length >= MAX_COMPARE) continue;
               const used = new Set(compare.map((id) => slots[id]));
-              const slot = sv.slot >= 0 && sv.slot < MAX_COMPARE && !used.has(sv.slot) ? sv.slot : freeSlot(compare, slots);
+              const slot =
+                sv.slot >= 0 && sv.slot < MAX_COMPARE && !used.has(sv.slot)
+                  ? sv.slot
+                  : freeSlot(compare, slots);
               plans[p.id] = p;
               slots[p.id] = slot;
               compare.push(p.id);
@@ -207,7 +232,9 @@ export const useAppStore = create<AppState>()(
             await ensureDay(key);
             get().setSettings({ day: key });
           } catch (e) {
-            set({ status: `Could not load that day's schedule: ${e instanceof Error ? e.message : e}` });
+            set({
+              status: `Could not load that day's schedule: ${e instanceof Error ? e.message : e}`,
+            });
           }
         },
 
@@ -223,13 +250,21 @@ export const useAppStore = create<AppState>()(
           }
           if (get().searching) return;
           const o = engineOpts(ctx.common, st, ctx.day);
-          set({ searching: true, progress: 0.02, status: `Searching ${o.req.length} centers, ${ctx.day.label.toLowerCase()} schedule…` });
+          set({
+            searching: true,
+            progress: 0.02,
+            status: `Searching ${o.req.length} centers, ${ctx.day.label.toLowerCase()} schedule…`,
+          });
           const t0 = performance.now();
           startSearch(st.day, ctx.engine, o, st.budget, {
             onProgress: (frac, best) =>
               set({
                 progress: Math.min(1, frac),
-                ...(best ? { status: `Best so far: done by ${fmt(best.finish)} (${dur(best.finish - best.start)} on the clock)` } : {}),
+                ...(best
+                  ? {
+                      status: `Best so far: done by ${fmt(best.finish)} (${dur(best.finish - best.start)} on the clock)`,
+                    }
+                  : {}),
               }),
             onDone: (results) => {
               const secs = ((performance.now() - t0) / 1000).toFixed(1);
@@ -239,16 +274,17 @@ export const useAppStore = create<AppState>()(
                 progress: 1,
                 status: results.length
                   ? `Searched for ${secs} s. ${results.length} start points ranked.`
-                  : 'No complete run found. Try an earlier start, a different day, or allow walking.',
+                  : "No complete run found. Try an earlier start, a different day, or allow walking.",
               });
             },
-            onError: (message) => set({ searching: false, progress: 0, status: `Search failed: ${message}` }),
+            onError: (message) =>
+              set({ searching: false, progress: 0, status: `Search failed: ${message}` }),
           });
         },
 
         stopSearch() {
           cancelSearch();
-          set({ searching: false, progress: 0, status: 'Search stopped.' });
+          set({ searching: false, progress: 0, status: "Search stopped." });
         },
 
         setFocus(id) {
@@ -295,9 +331,21 @@ export const useAppStore = create<AppState>()(
           const [x] = order.splice(oi, 1);
           order.splice(j, 0, x);
 
-          const np = buildPlan({ common: C, day, engine }, s.nextId, order, p.t0, p.st, p.o, 'Edited', p.from ?? p.id);
+          const np = buildPlan(
+            { common: C, day, engine },
+            s.nextId,
+            order,
+            p.t0,
+            p.st,
+            p.o,
+            "Edited",
+            p.from ?? p.id,
+          );
           if (!isOk(np)) {
-            set({ nextId: s.nextId + 1, status: `Can't move ${C.hubs[x].name} there: the run no longer finishes on this day's service.` });
+            set({
+              nextId: s.nextId + 1,
+              status: `Can't move ${C.hubs[x].name} there: the run no longer finishes on this day's service.`,
+            });
             return;
           }
           const plans = { ...s.plans, [np.id]: np };
@@ -305,7 +353,7 @@ export const useAppStore = create<AppState>()(
           const compare = [...s.compare];
           const slots = { ...s.slots };
           const ri = results.indexOf(p.id);
-          if (p.label === 'Edited') {
+          if (p.label === "Edited") {
             // replace an existing edited copy in place
             if (ri >= 0) results[ri] = np.id;
             const ci = compare.indexOf(p.id);
@@ -320,7 +368,12 @@ export const useAppStore = create<AppState>()(
             results.splice(ri + 1, 0, np.id);
           }
           const delta = np.x.stats.finish - p.x.stats.finish;
-          const change = delta === 0 ? 'unchanged' : delta > 0 ? `${dur(delta)} later` : `${dur(-delta)} earlier`;
+          const change =
+            delta === 0
+              ? "unchanged"
+              : delta > 0
+                ? `${dur(delta)} later`
+                : `${dur(-delta)} earlier`;
           set({
             plans,
             results,
@@ -338,7 +391,7 @@ export const useAppStore = create<AppState>()(
       };
     },
     {
-      name: 'tcr',
+      name: "tcr",
       version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (s): Persisted => ({
@@ -370,12 +423,12 @@ export const useAppStore = create<AppState>()(
 );
 
 /** CSS color for a plan: its compare slot color, or ink when it's only focused. */
-export const SERIES = ['--s1', '--s2', '--s3'] as const;
+export const SERIES = ["--s1", "--s2", "--s3"] as const;
 export function slotColor(slot: number): string {
   return `var(${SERIES[slot] ?? SERIES[0]})`;
 }
 export function usePlanColor(): (id: number) => string {
   const compare = useAppStore((s) => s.compare);
   const slots = useAppStore((s) => s.slots);
-  return (id) => (compare.includes(id) ? slotColor(slots[id]) : 'var(--ink)');
+  return (id) => (compare.includes(id) ? slotColor(slots[id]) : "var(--ink)");
 }

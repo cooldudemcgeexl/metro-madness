@@ -17,5 +17,11 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "scripts", "src/engine/engine.ts", "src/data/decode.ts", "src/data/types.ts"]
+  "include": [
+    "vite.config.ts",
+    "scripts",
+    "src/engine/engine.ts",
+    "src/data/decode.ts",
+    "src/data/types.ts"
+  ]
 }

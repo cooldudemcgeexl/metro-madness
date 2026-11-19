@@ -9,8 +9,14 @@ against the real GTFS timetable. React + TypeScript + Zustand, built with Vite.
 pnpm install
 pnpm dev            # http://localhost:5173
 pnpm typecheck
+pnpm lint           # oxlint (pnpm lint:fix to apply safe fixes)
+pnpm format         # oxfmt, including Tailwind class sorting (pnpm format:check in CI)
+pnpm check          # typecheck + lint + format check
 pnpm test:engine    # headless search over public/data; args: [day=wk|sat|sun] [budgetMs]
 ```
+
+VS Code: install the recommended Oxc extension. The workspace settings make it the formatter for
+this repo and format on save.
 
 ## Layout
 

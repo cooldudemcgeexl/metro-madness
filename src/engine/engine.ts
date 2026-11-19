@@ -19,7 +19,7 @@ export interface Engine {
   walk: Int16Array;
 }
 
-export type Objective = 'finish' | 'elapsed';
+export type Objective = "finish" | "elapsed";
 
 export interface EngineOpts {
   /** Hubs that must be visited. */
@@ -138,7 +138,13 @@ const FAIL: EvalFail = Object.freeze({ ok: false, cost: Infinity, finish: Infini
 const NO_STAGES: Stage[] = [];
 
 /** Walk an order of target centers. Already-visited targets are skipped. */
-export function evaluate(E: Engine, order: number[], o: EngineOpts, t0: number, opt?: EvaluateOptions): EvalResult {
+export function evaluate(
+  E: Engine,
+  order: number[],
+  o: EngineOpts,
+  t0: number,
+  opt?: EvaluateOptions,
+): EvalResult {
   const detail = !!opt?.detail;
   const delayAfter = opt?.delayAfter ?? -1;
   const delay = opt?.delay ?? 0;
@@ -168,15 +174,15 @@ export function evaluate(E: Engine, order: number[], o: EngineOpts, t0: number, 
   };
 
   for (let k = 1; k < order.length; k++) {
-    if (((vis & need) >>> 0) === need) break;
+    if ((vis & need) >>> 0 === need) break;
     const d = order[k];
     if (d === endH || vis & bit(d)) continue;
     if (!go(d)) return FAIL;
   }
-  if (((vis & need) >>> 0) !== need) return FAIL;
+  if ((vis & need) >>> 0 !== need) return FAIL;
   if (endH >= 0 && cur !== endH && !go(endH)) return FAIL;
   if (start < 0) start = t0;
-  const obj = o.objective === 'elapsed' ? t - start : t;
+  const obj = o.objective === "elapsed" ? t - start : t;
   return { ok: true, finish: t, start, legs, cost: obj * 1000 + legs, stages };
 }
 
@@ -193,13 +199,16 @@ interface BeamState {
 
 function beam(E: Engine, o: EngineOpts, s: number, t0: number, W: number): number[][] {
   const { req, needMask: need, endHub: endH, lambda: lam } = o;
-  let layer: BeamState[] = [{ cur: s, mask: bit(s), t: t0, legs: 0, first: true, par: null, h: s, start: t0 }];
+  let layer: BeamState[] = [
+    { cur: s, mask: bit(s), t: t0, legs: 0, first: true, par: null, h: s, start: t0 },
+  ];
   const done: BeamState[] = [];
-  const score = (x: BeamState) => (o.objective === 'elapsed' ? x.t - x.start : x.t) - lam * popc((x.mask & need) >>> 0);
+  const score = (x: BeamState) =>
+    (o.objective === "elapsed" ? x.t - x.start : x.t) - lam * popc((x.mask & need) >>> 0);
   for (let depth = 0; depth <= req.length + 1 && layer.length; depth++) {
     const map = new Map<number, BeamState>();
     for (const st of layer) {
-      if (((st.mask & need) >>> 0) === need) {
+      if ((st.mask & need) >>> 0 === need) {
         done.push(st);
         continue;
       }
@@ -213,7 +222,16 @@ function beam(E: Engine, o: EngineOpts, s: number, t0: number, W: number): numbe
         const legs = st.legs + R.legs;
         const prev = map.get(key);
         if (!prev || a < prev.t || (a === prev.t && legs < prev.legs)) {
-          map.set(key, { cur: h, mask: m, t: a, legs, first: false, par: st, h, start: st.first ? R.dep : st.start });
+          map.set(key, {
+            cur: h,
+            mask: m,
+            t: a,
+            legs,
+            first: false,
+            par: st,
+            h,
+            start: st.first ? R.dep : st.start,
+          });
         }
       }
     }
@@ -276,7 +294,7 @@ function localSearch(E: Engine, o: EngineOpts, order: number[], t0: number, dead
 }
 
 function bestStartTime(E: Engine, o: EngineOpts, order: number[]): { t0: number; ev: EvalResult } {
-  if (o.objective !== 'elapsed') return { t0: o.start, ev: evaluate(E, order, o, o.start) };
+  if (o.objective !== "elapsed") return { t0: o.start, ev: evaluate(E, order, o, o.start) };
   let bt = o.start;
   let be = evaluate(E, order, o, o.start);
   for (let t = o.start + 5; t <= o.start + o.window; t += 5) {
@@ -293,12 +311,19 @@ function bestStartTime(E: Engine, o: EngineOpts, order: number[]): { t0: number;
  * Beam search from every start center, then local search on each start's best, then iterated
  * perturbation on the leaders until the time budget runs out. Returns the best run per start.
  */
-export function search(E: Engine, o: EngineOpts, budget: number, progress: ProgressFn): SearchResult[] {
+export function search(
+  E: Engine,
+  o: EngineOpts,
+  budget: number,
+  progress: ProgressFn,
+): SearchResult[] {
   const t00 = Date.now();
   const deadline = t00 + budget;
-  const starts = o.startHub >= 0 ? [o.startHub] : o.req.filter((h) => h !== o.endHub || o.req.length === 1);
+  const starts =
+    o.startHub >= 0 ? [o.startHub] : o.req.filter((h) => h !== o.endHub || o.req.length === 1);
   const times: number[] = [];
-  if (o.objective === 'elapsed') for (let t = o.start; t <= o.start + o.window; t += 30) times.push(t);
+  if (o.objective === "elapsed")
+    for (let t = o.start; t <= o.start + o.window; t += 30) times.push(t);
   else times.push(o.start);
 
   const slots = new Map<number, Slot>();
@@ -313,7 +338,8 @@ export function search(E: Engine, o: EngineOpts, budget: number, progress: Progr
   let k = 0;
   for (const s of starts) {
     for (const t0 of times) {
-      for (const order of beam(E, o, s, t0, W).slice(0, 25)) consider(s, order, t0, evaluate(E, order, o, t0));
+      for (const order of beam(E, o, s, t0, W).slice(0, 25))
+        consider(s, order, t0, evaluate(E, order, o, t0));
       if (Date.now() > t00 + budget * 0.45) break;
     }
     k++;
@@ -335,7 +361,13 @@ export function search(E: Engine, o: EngineOpts, budget: number, progress: Progr
   while (Date.now() < deadline) {
     const lead = ranked();
     if (!lead.length) break;
-    const pick = lead[Math.min(lead.length - 1, Math.floor(Math.pow(Math.random(), 2.2) * Math.min(lead.length, 10)))];
+    const pick =
+      lead[
+        Math.min(
+          lead.length - 1,
+          Math.floor(Math.pow(Math.random(), 2.2) * Math.min(lead.length, 10)),
+        )
+      ];
     const [s, sl] = pick;
     const c = sl.order.slice();
     const lo = 1;
@@ -367,9 +399,9 @@ export function search(E: Engine, o: EngineOpts, budget: number, progress: Progr
         c.splice(0, c.length, ...A, ...C, ...B, ...D);
       }
     }
-    const t0 = o.objective === 'elapsed' ? sl.t0 : o.start;
+    const t0 = o.objective === "elapsed" ? sl.t0 : o.start;
     const r = localSearch(E, o, c, t0, Math.min(deadline, Date.now() + 1500));
-    const bt = o.objective === 'elapsed' ? bestStartTime(E, o, r.order) : { t0, ev: r.ev };
+    const bt = o.objective === "elapsed" ? bestStartTime(E, o, r.order) : { t0, ev: r.ev };
     consider(s, r.order, bt.t0, bt.ev);
     if (++it % 4 === 0) progress(0.6 + (0.4 * (Date.now() - t00)) / budget, slots);
   }

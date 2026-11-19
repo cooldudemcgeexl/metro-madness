@@ -1,5 +1,5 @@
-import { search, type Engine } from './engine.ts';
-import type { SearchRequest, WorkerMessage } from './protocol.ts';
+import { search, type Engine } from "./engine.ts";
+import type { SearchRequest, WorkerMessage } from "./protocol.ts";
 
 // Typed view of the worker global (the `webworker` lib conflicts with `DOM` in one program).
 const ctx = self as unknown as {
@@ -10,6 +10,7 @@ const ctx = self as unknown as {
 // The engine for each day is sent once and cached here.
 const cache = new Map<string, Engine>();
 
+// oxlint-disable-next-line unicorn/prefer-add-event-listener -- ctx is typed with onmessage only
 ctx.onmessage = (ev) => {
   const m = ev.data;
   if (m.engine) cache.set(m.key, m.engine);
@@ -22,7 +23,11 @@ ctx.onmessage = (ev) => {
     last = now;
     let best = null;
     for (const v of slots.values()) if (!best || v.ev.cost < best.ev.cost) best = v;
-    ctx.postMessage({ type: 'progress', frac, best: best && { finish: best.ev.finish, start: best.ev.start } });
+    ctx.postMessage({
+      type: "progress",
+      frac,
+      best: best && { finish: best.ev.finish, start: best.ev.start },
+    });
   });
-  ctx.postMessage({ type: 'done', results });
+  ctx.postMessage({ type: "done", results });
 };

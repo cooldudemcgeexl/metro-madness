@@ -1,20 +1,21 @@
 {
   "name": "stl-transit-challenge",
-  "private": true,
   "version": "1.0.0",
-  "type": "module",
+  "private": true,
   "description": "Plan a one-day run through every Metro St. Louis transit center using the real GTFS timetable.",
-  "packageManager": "pnpm@11.20.0",
-  "engines": {
-    "node": ">=22"
-  },
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "data:build": "tsx scripts/precompute.ts data/gtfs_raw public/data",
-    "test:engine": "tsx scripts/test-engine.ts"
+    "test:engine": "tsx scripts/test-engine.ts",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check"
   },
   "dependencies": {
     "react": "^19.3.1",
@@ -27,9 +28,15 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "oxfmt": "^0.79.0",
+    "oxlint": "^1.94.0",
     "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.8"
-  }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.20.0"
 }

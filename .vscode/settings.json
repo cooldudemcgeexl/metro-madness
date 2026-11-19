@@ -1,0 +1,12 @@
+{
+  // Format and lint this repo with oxfmt/oxlint (Oxc extension) instead of the global Prettier default.
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[json]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[css]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "editor.formatOnSave": true,
+  "eslint.enable": false
+}

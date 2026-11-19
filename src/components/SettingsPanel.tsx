@@ -1,26 +1,30 @@
-import { useMemo, type FormEvent } from 'react';
-import type { Objective } from '../engine/engine.ts';
-import { reqHubs, selectedHubs } from '../lib/plan.ts';
-import { useAppStore } from '../store/useAppStore.ts';
-import { CenterPicker } from './CenterPicker.tsx';
-import { Panel } from './Panel.tsx';
-import { Button, Check, Field, Input, Seg, SegButton, Select, note } from './ui.tsx';
+import { useMemo, type FormEvent } from "react";
+import type { Objective } from "../engine/engine.ts";
+import { reqHubs, selectedHubs } from "../lib/plan.ts";
+import { useAppStore } from "../store/useAppStore.ts";
+import { CenterPicker } from "./CenterPicker.tsx";
+import { Panel } from "./Panel.tsx";
+import { Button, Check, Field, Input, Seg, SegButton, Select, note } from "./ui.tsx";
 
 const DWELL = [0, 1, 2, 3, 5, 8];
 const WALK: [number, string][] = [
-  [0, 'Not allowed'],
-  [10, 'Up to 10 min'],
-  [20, 'Up to 20 min'],
-  [30, 'Up to 30 min'],
+  [0, "Not allowed"],
+  [10, "Up to 10 min"],
+  [20, "Up to 20 min"],
+  [30, "Up to 30 min"],
 ];
 const BUDGET: [number, string][] = [
-  [4000, 'Quick (4 s)'],
-  [12000, 'Thorough (12 s)'],
-  [30000, 'Deep (30 s)'],
+  [4000, "Quick (4 s)"],
+  [12000, "Thorough (12 s)"],
+  [30000, "Deep (30 s)"],
 ];
 const OBJECTIVES: [Objective, string, string][] = [
-  ['finish', 'Earliest finish', 'Leaves at your earliest start and finishes as early as possible.'],
-  ['elapsed', 'Least time on the clock', 'Tries start times up to 3 hours after your earliest start and picks the shortest day.'],
+  ["finish", "Earliest finish", "Leaves at your earliest start and finishes as early as possible."],
+  [
+    "elapsed",
+    "Least time on the clock",
+    "Tries start times up to 3 hours after your earliest start and picks the shortest day.",
+  ],
 ];
 
 export function SettingsPanel() {
@@ -30,7 +34,10 @@ export function SettingsPanel() {
   const progress = useAppStore((s) => s.progress);
   const status = useAppStore((s) => s.status);
   const day = useAppStore((s) => s.days[s.settings.day]);
-  const { setSettings, setDay, runSearch, stopSearch } = useAppStore.getState();
+  const setSettings = useAppStore((s) => s.setSettings);
+  const setDay = useAppStore((s) => s.setDay);
+  const runSearch = useAppStore((s) => s.runSearch);
+  const stopSearch = useAppStore((s) => s.stopSearch);
 
   // Start/finish can only be one of the selected centers.
   const hubOptions = useMemo(() => {
@@ -41,7 +48,7 @@ export function SettingsPanel() {
       .filter(({ i }) => sel.has(i))
       .sort((a, b) => a.h.name.localeCompare(b.h.name));
   }, [common, st.centers]);
-  const hubValue = (id: string | null) => (hubOptions.some((o) => o.h.id === id) ? id! : '');
+  const hubValue = (id: string | null) => (hubOptions.some((o) => o.h.id === id) ? id! : "");
   const tooFew = !!common && reqHubs(common, st, day).length < 2;
 
   const onSubmit = (e: FormEvent) => {
@@ -49,8 +56,12 @@ export function SettingsPanel() {
     void runSearch(false);
   };
 
-  const hubSelect = (id: string, value: string | null, key: 'startHub' | 'endHub') => (
-    <Select id={id} value={hubValue(value)} onChange={(e) => setSettings({ [key]: e.target.value || null })}>
+  const hubSelect = (id: string, value: string | null, key: "startHub" | "endHub") => (
+    <Select
+      id={id}
+      value={hubValue(value)}
+      onChange={(e) => setSettings({ [key]: e.target.value || null })}
+    >
       <option value="">Anywhere (planner chooses)</option>
       {hubOptions.map(({ i, h }) => (
         <option key={i} value={h.id}>
@@ -75,13 +86,23 @@ export function SettingsPanel() {
 
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Earliest start" htmlFor="start">
-            <Input type="time" id="start" step={300} value={st.start} onChange={(e) => setSettings({ start: e.target.value || '05:00' })} />
+            <Input
+              type="time"
+              id="start"
+              step={300}
+              value={st.start}
+              onChange={(e) => setSettings({ start: e.target.value || "05:00" })}
+            />
           </Field>
           <Field label="Change buffer at centers" htmlFor="dwell">
-            <Select id="dwell" value={st.dwell} onChange={(e) => setSettings({ dwell: +e.target.value })}>
+            <Select
+              id="dwell"
+              value={st.dwell}
+              onChange={(e) => setSettings({ dwell: +e.target.value })}
+            >
               {DWELL.map((d) => (
                 <option key={d} value={d}>
-                  {d ? `${d} min` : 'None'}
+                  {d ? `${d} min` : "None"}
                 </option>
               ))}
             </Select>
@@ -89,16 +110,20 @@ export function SettingsPanel() {
         </div>
 
         <Field label="Start at" htmlFor="startHub">
-          {hubSelect('startHub', st.startHub, 'startHub')}
+          {hubSelect("startHub", st.startHub, "startHub")}
         </Field>
         <Field label="Finish at" htmlFor="endHub">
-          {hubSelect('endHub', st.endHub, 'endHub')}
+          {hubSelect("endHub", st.endHub, "endHub")}
         </Field>
 
         <Field label="Optimize for">
           <Seg label="Optimize for">
             {OBJECTIVES.map(([v, text]) => (
-              <SegButton key={v} pressed={st.objective === v} onClick={() => setSettings({ objective: v })}>
+              <SegButton
+                key={v}
+                pressed={st.objective === v}
+                onClick={() => setSettings({ objective: v })}
+              >
                 {text}
               </SegButton>
             ))}
@@ -109,13 +134,16 @@ export function SettingsPanel() {
         <Check
           checked={st.pass}
           onChange={(e) => setSettings({ pass: e.target.checked })}
-          hint="Like the Tube Challenge rule. Untick to require getting off at every center."
         >
           Riding through a center counts as a visit
         </Check>
 
         <Field label="Walk between centers" htmlFor="walk">
-          <Select id="walk" value={st.walk} onChange={(e) => setSettings({ walk: +e.target.value })}>
+          <Select
+            id="walk"
+            value={st.walk}
+            onChange={(e) => setSettings({ walk: +e.target.value })}
+          >
             {WALK.map(([v, text]) => (
               <option key={v} value={v}>
                 {text}
@@ -127,7 +155,11 @@ export function SettingsPanel() {
         <CenterPicker />
 
         <Field label="Search effort" htmlFor="budget">
-          <Select id="budget" value={st.budget} onChange={(e) => setSettings({ budget: +e.target.value })}>
+          <Select
+            id="budget"
+            value={st.budget}
+            onChange={(e) => setSettings({ budget: +e.target.value })}
+          >
             {BUDGET.map(([v, text]) => (
               <option key={v} value={v}>
                 {text}
@@ -147,11 +179,16 @@ export function SettingsPanel() {
           )}
         </div>
         <div className="h-1 overflow-hidden rounded-xs bg-line" aria-hidden="true">
-          <i className="block h-full bg-accent transition-[width] duration-200" style={{ width: `${Math.round(progress * 100)}%` }} />
+          <i
+            className="block h-full bg-accent transition-[width] duration-200"
+            style={{ width: `${Math.round(progress * 100)}%` }}
+          />
         </div>
-        <div className="min-h-[1.4em] text-xs text-muted" role="status">
-          {tooFew && !searching ? `Pick at least two transit centers with ${day?.label.toLowerCase() ?? ''} service.` : status}
-        </div>
+        <output className="block min-h-[1.4em] text-xs text-muted">
+          {tooFew && !searching
+            ? `Pick at least two transit centers with ${day?.label.toLowerCase() ?? ""} service.`
+            : status}
+        </output>
       </form>
     </Panel>
   );

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { isOk, type OkPlan } from '../lib/plan.ts';
-import { useAppStore } from '../store/useAppStore.ts';
+import { useMemo } from "react";
+import { isOk, type OkPlan } from "../lib/plan.ts";
+import { useAppStore } from "../store/useAppStore.ts";
 
 /** Plans drawn on the map and timeline: the compared ones, plus the focused one if it isn't compared. */
 export function useShownPlans(): OkPlan[] {

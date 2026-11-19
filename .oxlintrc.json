@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "react", "jsx-a11y", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    // The automatic JSX runtime doesn't need React in scope.
+    "react/react-in-jsx-scope": "off",
+    // Only Worker#postMessage is used, which has no targetOrigin.
+    "unicorn/require-post-message-target-origin": "off",
+    // Sorting/reversing arrays the code just built is intentional; copying would only cost time
+    // (the engine sorts in its hot loop).
+    "unicorn/no-array-sort": "off",
+    "unicorn/no-array-reverse": "off",
+    "import/no-unassigned-import": ["warn", { "allow": ["**/*.css"] }]
+  },
+  "env": {
+    "builtin": true,
+    "browser": true
+  },
+  "ignorePatterns": ["dist", "public/data"],
+  "overrides": [
+    {
+      "files": ["scripts/**", "vite.config.ts"],
+      "env": { "browser": false, "node": true }
+    }
+  ]
+}

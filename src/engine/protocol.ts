@@ -1,4 +1,4 @@
-import type { Engine, EngineOpts, SearchResult } from './engine.ts';
+import type { Engine, EngineOpts, SearchResult } from "./engine.ts";
 
 export interface SearchRequest {
   key: string;
@@ -9,5 +9,5 @@ export interface SearchRequest {
 }
 
 export type WorkerMessage =
-  | { type: 'progress'; frac: number; best: { finish: number; start: number } | null }
-  | { type: 'done'; results: SearchResult[] };
+  | { type: "progress"; frac: number; best: { finish: number; start: number } | null }
+  | { type: "done"; results: SearchResult[] };

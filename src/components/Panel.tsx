@@ -1,5 +1,5 @@
-import { useId, type ReactNode } from 'react';
-import { cx } from './ui.tsx';
+import { useId, type ReactNode } from "react";
+import { cx } from "./ui.tsx";
 
 interface PanelProps {
   title: string;
@@ -21,7 +21,7 @@ export function Panel({ title, aside, padded = true, bodyClassName, children }: 
         </h2>
         {aside}
       </div>
-      {padded ? <div className={cx('p-3.5', bodyClassName)}>{children}</div> : children}
+      {padded ? <div className={cx("p-3.5", bodyClassName)}>{children}</div> : children}
     </section>
   );
 }

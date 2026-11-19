@@ -6,13 +6,13 @@
 // browser can answer "if I'm at X at 10:41, when can I be at Y?" exactly.
 //
 // Usage: pnpm data:build   (= tsx scripts/precompute.ts data/gtfs_raw public/data)
-import fs from 'node:fs';
-import path from 'node:path';
-import type { CommonRaw, DayMeta, DayRaw, LegRow, RawShape, TripRow } from '../src/data/types.ts';
-import { HUBS } from './hubs.ts';
+import fs from "node:fs";
+import path from "node:path";
+import type { CommonRaw, DayMeta, DayRaw, LegRow, RawShape, TripRow } from "../src/data/types.ts";
+import { HUBS } from "./hubs.ts";
 
-const GTFS = path.resolve(process.argv[2] || 'data/gtfs_raw');
-const OUT = path.resolve(process.argv[3] || 'public/data');
+const GTFS = path.resolve(process.argv[2] || "data/gtfs_raw");
+const OUT = path.resolve(process.argv[3] || "public/data");
 fs.mkdirSync(OUT, { recursive: true });
 
 // ---- tunables (documented on the page) ----
@@ -25,28 +25,28 @@ const MAX_JOURNEY_SEC = 5 * 3600;
 const HUB_WALK_MAX_M = 3200; // hub-to-hub walking table (the page decides what to allow)
 
 const DAYS = [
-  { key: 'wk', label: 'Weekday', date: '20261118' },
-  { key: 'sat', label: 'Saturday', date: '20261121' },
-  { key: 'sun', label: 'Sunday', date: '20261122' },
+  { key: "wk", label: "Weekday", date: "20261118" },
+  { key: "sat", label: "Saturday", date: "20261121" },
+  { key: "sun", label: "Sunday", date: "20261122" },
 ];
 
 // ---------- helpers ----------
 type Row = Record<string, string>;
 
 function readCsv(name: string): Row[] {
-  const txt = fs.readFileSync(path.join(GTFS, name), 'utf8').replace(/^﻿/, '');
+  const txt = fs.readFileSync(path.join(GTFS, name), "utf8").replace(/^﻿/, "");
   const lines = txt.split(/\r?\n/).filter(Boolean);
-  const head = lines[0].split(',').map((s) => s.trim());
+  const head = lines[0].split(",").map((s) => s.trim());
   return lines.slice(1).map((l) => {
-    const v = l.split(',');
+    const v = l.split(",");
     const o: Row = {};
-    head.forEach((h, i) => (o[h] = (v[i] ?? '').trim()));
+    head.forEach((h, i) => (o[h] = (v[i] ?? "").trim()));
     return o;
   });
 }
 
 const toSec = (s: string) => {
-  const [h, m, x] = s.split(':').map(Number);
+  const [h, m, x] = s.split(":").map(Number);
   return h * 3600 + m * 60 + (x || 0);
 };
 
@@ -65,15 +65,15 @@ function getOrInit<K, V>(m: Map<K, V>, k: K, init: () => V): V {
   return v;
 }
 
-console.time('load');
-const stopsRaw = readCsv('stops.txt');
-const routesRaw = readCsv('routes.txt');
-const tripsRaw = readCsv('trips.txt');
-const stRaw = readCsv('stop_times.txt');
-const shapesRaw = readCsv('shapes.txt');
-const calendar = readCsv('calendar.txt');
-const calDates = readCsv('calendar_dates.txt');
-console.timeEnd('load');
+console.time("load");
+const stopsRaw = readCsv("stops.txt");
+const routesRaw = readCsv("routes.txt");
+const tripsRaw = readCsv("trips.txt");
+const stRaw = readCsv("stop_times.txt");
+const shapesRaw = readCsv("shapes.txt");
+const calendar = readCsv("calendar.txt");
+const calDates = readCsv("calendar_dates.txt");
+console.timeEnd("load");
 
 // ---------- stops ----------
 interface Stop {
@@ -91,7 +91,7 @@ const NS = stops.length;
 
 // hubs
 const NH = HUBS.length;
-if (NH > 32) throw new Error('pass-through masks are 32-bit');
+if (NH > 32) throw new Error("pass-through masks are 32-bit");
 const stopHub = new Int16Array(NS).fill(-1);
 const hubs = HUBS.map((h, hi) => {
   const idxs = h.stops.map((id) => {
@@ -106,10 +106,12 @@ const hubs = HUBS.map((h, hi) => {
 });
 
 // footpaths (grid bucket)
-console.time('footpaths');
+console.time("footpaths");
 const cell = 0.005;
 const grid = new Map<string, number[]>();
-stops.forEach((s, i) => getOrInit(grid, `${Math.floor(s.lat / cell)},${Math.floor(s.lon / cell)}`, () => []).push(i));
+stops.forEach((s, i) =>
+  getOrInit(grid, `${Math.floor(s.lat / cell)},${Math.floor(s.lon / cell)}`, () => []).push(i),
+);
 /** foot[i] = [[nearby stop, walk seconds], ...] */
 const foot: [number, number][][] = Array.from({ length: NS }, () => []);
 stops.forEach((s, i) => {
@@ -124,7 +126,7 @@ stops.forEach((s, i) => {
       }
     }
 });
-console.timeEnd('footpaths');
+console.timeEnd("footpaths");
 
 // ---------- routes / shapes ----------
 const routes = routesRaw.map((r) => ({
@@ -132,7 +134,7 @@ const routes = routesRaw.map((r) => ({
   short: r.route_short_name,
   long: r.route_long_name,
   type: +r.route_type,
-  color: r.route_color && r.route_color !== 'FFFFFF' ? r.route_color : null,
+  color: r.route_color && r.route_color !== "FFFFFF" ? r.route_color : null,
   // MetroBus Illinois routes reuse short names 1..23; route ids 19792..19805 are the Illinois set in this feed.
   il: +r.route_type === 3 && +r.route_id >= 19792 && +r.route_id <= 19805,
 }));
@@ -141,7 +143,12 @@ const routeIdx = new Map(routes.map((r, i) => [r.id, i]));
 // shapes: simplify with Douglas-Peucker (~12 m) to keep the page light
 type Pt = [lat: number, lon: number];
 const shapePts = new Map<string, [seq: number, lat: number, lon: number][]>();
-for (const r of shapesRaw) getOrInit(shapePts, r.shape_id, () => []).push([+r.shape_pt_sequence, +r.shape_pt_lat, +r.shape_pt_lon]);
+for (const r of shapesRaw)
+  getOrInit(shapePts, r.shape_id, () => []).push([
+    +r.shape_pt_sequence,
+    +r.shape_pt_lat,
+    +r.shape_pt_lon,
+  ]);
 
 /** Indices of the points kept by Douglas-Peucker at tolerance `tol` metres. */
 function dp(pts: Pt[], tol: number): number[] {
@@ -228,7 +235,14 @@ interface Trip {
 const tripIdx = new Map<string, number>();
 const trips: Trip[] = tripsRaw.map((t, i) => {
   tripIdx.set(t.trip_id, i);
-  return { id: t.trip_id, route: routeIdx.get(t.route_id)!, service: t.service_id, headsign: t.trip_headsign, shape: shapeIdx.get(t.shape_id) ?? -1, st: [] };
+  return {
+    id: t.trip_id,
+    route: routeIdx.get(t.route_id)!,
+    service: t.service_id,
+    headsign: t.trip_headsign,
+    shape: shapeIdx.get(t.shape_id) ?? -1,
+    st: [],
+  };
 });
 for (const r of stRaw) {
   const ti = tripIdx.get(r.trip_id);
@@ -273,9 +287,17 @@ function stopShapeIdx(t: Trip): number[] {
 // ---------- services ----------
 function activeServices(date: string): Set<string> {
   const dow = new Date(+date.slice(0, 4), +date.slice(4, 6) - 1, +date.slice(6, 8)).getDay();
-  const col = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dow];
-  const set = new Set(calendar.filter((c) => c.start_date <= date && c.end_date >= date && c[col] === '1').map((c) => c.service_id));
-  for (const d of calDates) if (d.date === date) d.exception_type === '1' ? set.add(d.service_id) : set.delete(d.service_id);
+  const col = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][dow];
+  const set = new Set(
+    calendar
+      .filter((c) => c.start_date <= date && c.end_date >= date && c[col] === "1")
+      .map((c) => c.service_id),
+  );
+  for (const d of calDates) {
+    if (d.date !== date) continue;
+    if (d.exception_type === "1") set.add(d.service_id);
+    else set.delete(d.service_id);
+  }
   return set;
 }
 
@@ -286,21 +308,41 @@ hubs.forEach((h) => h.idxs.forEach((i) => usedStops.add(i)));
 const usedShapes = new Map<number, Set<number>>();
 
 type JLeg =
-  | { kind: 'ride'; trip: number; from: number; to: number; dep: number; arr: number; p0: number; p1: number }
-  | { kind: 'walk'; from: number; to: number; dur: number };
+  | {
+      kind: "ride";
+      trip: number;
+      from: number;
+      to: number;
+      dep: number;
+      arr: number;
+      p0: number;
+      p1: number;
+    }
+  | { kind: "walk"; from: number; to: number; dur: number };
 
 const dayMeta: DayMeta[] = [];
 for (const day of DAYS) {
   console.time(`day ${day.key}`);
   const svc = activeServices(day.date);
-  const dTrips = trips.map((_, i) => i).filter((i) => svc.has(trips[i].service) && trips[i].st.length > 1);
+  const dTrips = trips
+    .map((_, i) => i)
+    .filter((i) => svc.has(trips[i].service) && trips[i].st.length > 1);
 
   // connections: [dep, arr, fromStop, toStop, trip, pos, noPickup, noDropoff]
   const conns: number[][] = [];
   for (const ti of dTrips) {
     const st = trips[ti].st;
     for (let k = 0; k + 1 < st.length; k++)
-      conns.push([st[k].dep, st[k + 1].arr, st[k].stop, st[k + 1].stop, ti, k, st[k].pu === 1 ? 1 : 0, st[k + 1].do === 1 ? 1 : 0]);
+      conns.push([
+        st[k].dep,
+        st[k + 1].arr,
+        st[k].stop,
+        st[k + 1].stop,
+        ti,
+        k,
+        st[k].pu === 1 ? 1 : 0,
+        st[k + 1].do === 1 ? 1 : 0,
+      ]);
   }
   conns.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const NC = conns.length;
@@ -362,7 +404,8 @@ for (const day of DAYS) {
   function query(origin: number, t0: number): Float64Array {
     gen++;
     for (const s of hubs[origin].idxs) setS(s, t0, t0, 0, 0, 0);
-    for (const s of hubs[origin].idxs) for (const [s2, w] of foot[s]) if (t0 + w < getT(s2)) setS(s2, t0 + w, t0 + w, 2, s, w);
+    for (const s of hubs[origin].idxs)
+      for (const [s2, w] of foot[s]) if (t0 + w < getT(s2)) setS(s2, t0 + w, t0 + w, 2, s, w);
     const hubBest = new Float64Array(NH).fill(Infinity);
     hubBest[origin] = t0;
     let reached = 1;
@@ -416,11 +459,20 @@ for (const day of DAYS) {
       if (predType[s] === 1) {
         const b = predA[s];
         const e = predB[s];
-        legs.push({ kind: 'ride', trip: cTrip[b], from: cFrom[b], to: cTo[e], dep: cDep[b], arr: cArr[e], p0: cPos[b], p1: cPos[e] + 1 });
+        legs.push({
+          kind: "ride",
+          trip: cTrip[b],
+          from: cFrom[b],
+          to: cTo[e],
+          dep: cDep[b],
+          arr: cArr[e],
+          p0: cPos[b],
+          p1: cPos[e] + 1,
+        });
         s = cFrom[b];
       } else {
         const from = predA[s];
-        legs.push({ kind: 'walk', from, to: s, dur: predB[s] });
+        legs.push({ kind: "walk", from, to: s, dur: predB[s] });
         s = from;
       }
     }
@@ -451,7 +503,7 @@ for (const day of DAYS) {
     const ids: number[] = [];
     legs.forEach((L, i) => {
       let rec: LegRow;
-      if (L.kind === 'ride') {
+      if (L.kind === "ride") {
         const t = trips[L.trip];
         for (let p = L.p0; p <= L.p1; p++) {
           const h = stopHub[t.st[p].stop];
@@ -471,23 +523,44 @@ for (const day of DAYS) {
         const passes: number[] = [];
         for (let p = L.p0; p <= L.p1; p++) {
           const h = stopHub[t.st[p].stop];
-          if (h >= 0 && passes[passes.length - 2] !== h) passes.push(h, Math.round((p === L.p0 ? t.st[p].dep : t.st[p].arr) / 60));
+          if (h >= 0 && passes[passes.length - 2] !== h)
+            passes.push(h, Math.round((p === L.p0 ? t.st[p].dep : t.st[p].arr) / 60));
         }
-        rec = [internTrip(L.trip), L.from, Math.round(L.dep / 60), L.to, Math.round(L.arr / 60), sh0, sh1, L.p1 - L.p0, passes];
+        rec = [
+          internTrip(L.trip),
+          L.from,
+          Math.round(L.dep / 60),
+          L.to,
+          Math.round(L.arr / 60),
+          sh0,
+          sh1,
+          L.p1 - L.p0,
+          passes,
+        ];
         clock = L.arr;
       } else {
         // walk: depart as late as possible before the next ride, or right after the previous one
         const nextLeg = legs[i + 1];
-        const dep = i === 0 && nextLeg && nextLeg.kind === 'ride' ? nextLeg.dep - L.dur : clock;
+        const dep = i === 0 && nextLeg && nextLeg.kind === "ride" ? nextLeg.dep - L.dur : clock;
         const s = Math.max(clock, dep);
         const h = stopHub[L.to];
         if (h >= 0) mask = (mask | (1 << h)) >>> 0;
         usedStops.add(L.from);
         usedStops.add(L.to);
-        rec = [-1, L.from, Math.round(s / 60), L.to, Math.round((s + L.dur) / 60), 0, 0, 0, h >= 0 ? [h, Math.round((s + L.dur) / 60)] : []];
+        rec = [
+          -1,
+          L.from,
+          Math.round(s / 60),
+          L.to,
+          Math.round((s + L.dur) / 60),
+          0,
+          0,
+          0,
+          h >= 0 ? [h, Math.round((s + L.dur) / 60)] : [],
+        ];
         clock = s + L.dur;
       }
-      const k = rec.join(',');
+      const k = rec.join(",");
       let id = legKey.get(k);
       if (id === undefined) {
         id = legOut.length;
@@ -572,17 +645,25 @@ for (const day of DAYS) {
     legs: legOut,
     span,
     // profiles flattened: P[o*NH+d] = flat ints [dep, arr, mask, nLegs, ...legIds] repeated
-    P: prof.flat().map((list) => list.flatMap((e) => [e[0], e[1], e[2], e.length - 3, ...e.slice(3)])),
+    P: prof
+      .flat()
+      .map((list) => list.flatMap((e) => [e[0], e[1], e[2], e.length - 3, ...e.slice(3)])),
   };
   fs.writeFileSync(path.join(OUT, `day_${day.key}.json`), JSON.stringify(out));
   prof = [];
-  dayMeta.push({ key: day.key, label: day.label, date: day.date, trips: dTrips.length, connections: NC });
+  dayMeta.push({
+    key: day.key,
+    label: day.label,
+    date: day.date,
+    trips: dTrips.length,
+    connections: NC,
+  });
   console.timeEnd(`day ${day.key}`);
 }
 
 // ---------- common file ----------
 const stopRemap = new Map<number, number>();
-const stopOut: CommonRaw['stops'] = [];
+const stopOut: CommonRaw["stops"] = [];
 [...usedStops]
   .sort((a, b) => a - b)
   .forEach((i) => {
@@ -593,8 +674,18 @@ const stopOut: CommonRaw['stops'] = [];
 // rewrite stop indices inside day files to compact indices
 for (const day of DAYS) {
   const f = path.join(OUT, `day_${day.key}.json`);
-  const d = JSON.parse(fs.readFileSync(f, 'utf8')) as DayRaw;
-  d.legs = d.legs.map((l): LegRow => [l[0], stopRemap.get(l[1])!, l[2], stopRemap.get(l[3])!, l[4], l[5], l[6], l[7], l[8]]);
+  const d = JSON.parse(fs.readFileSync(f, "utf8")) as DayRaw;
+  d.legs = d.legs.map((l): LegRow => [
+    l[0],
+    stopRemap.get(l[1])!,
+    l[2],
+    stopRemap.get(l[3])!,
+    l[4],
+    l[5],
+    l[6],
+    l[7],
+    l[8],
+  ]);
   fs.writeFileSync(f, JSON.stringify(d));
 }
 
@@ -609,7 +700,7 @@ for (const [si, need] of usedShapes) {
 }
 
 // full route geometry for the background network (most common few shapes per route, simplified harder)
-const network: CommonRaw['network'] = [];
+const network: CommonRaw["network"] = [];
 const routeShapes = new Map<number, Map<number, number>>();
 for (const t of trips) {
   if (t.shape < 0) continue;
@@ -632,7 +723,10 @@ const hubWalk = hubs.map((a) =>
 );
 const feedInfo = {
   start: calendar.map((c) => c.start_date).sort()[0],
-  end: calendar.map((c) => c.end_date).sort().at(-1)!,
+  end: calendar
+    .map((c) => c.end_date)
+    .sort()
+    .at(-1)!,
   downloaded: new Date().toISOString().slice(0, 10),
 };
 const common: CommonRaw = {
@@ -654,5 +748,6 @@ const common: CommonRaw = {
   shapes: shapesOut,
   network,
 };
-fs.writeFileSync(path.join(OUT, 'common.json'), JSON.stringify(common));
-for (const f of fs.readdirSync(OUT)) console.log(f, (fs.statSync(path.join(OUT, f)).size / 1e6).toFixed(2), 'MB');
+fs.writeFileSync(path.join(OUT, "common.json"), JSON.stringify(common));
+for (const f of fs.readdirSync(OUT))
+  console.log(f, (fs.statSync(path.join(OUT, f)).size / 1e6).toFixed(2), "MB");

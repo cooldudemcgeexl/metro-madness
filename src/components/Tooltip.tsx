@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useTooltip } from '../store/useTooltip.ts';
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTooltip } from "../store/useTooltip.ts";
 
 export function Tooltip() {
   const { content, visible, x, y, move } = useTooltip();
@@ -8,8 +8,8 @@ export function Tooltip() {
 
   useEffect(() => {
     if (!visible) return;
-    document.addEventListener('pointermove', move);
-    return () => document.removeEventListener('pointermove', move);
+    document.addEventListener("pointermove", move);
+    return () => document.removeEventListener("pointermove", move);
   }, [visible, move]);
 
   // Keep the tip on screen: flip to the other side of the pointer near the edges.
@@ -23,6 +23,8 @@ export function Tooltip() {
     if (left + w > window.innerWidth - 8) left = x - w - 14;
     if (top + h > window.innerHeight - 8) top = y - h - 14;
     setPos({ left: Math.max(8, left), top: Math.max(8, top) });
+    // `content` is listed on purpose: new content changes the tip's size, so re-measure.
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies
   }, [x, y, content]);
 
   return (

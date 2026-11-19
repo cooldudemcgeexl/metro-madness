@@ -1,7 +1,7 @@
 // Owns the search Web Worker. Stopping a search terminates the worker; the next search starts
 // a fresh one (and re-sends the day's engine).
-import type { Engine, EngineOpts, SearchResult } from './engine.ts';
-import type { SearchRequest, WorkerMessage } from './protocol.ts';
+import type { Engine, EngineOpts, SearchResult } from "./engine.ts";
+import type { SearchRequest, WorkerMessage } from "./protocol.ts";
 
 let worker: Worker | null = null;
 const sent = new Set<string>();
@@ -12,9 +12,15 @@ export interface SearchHandlers {
   onError: (message: string) => void;
 }
 
-export function startSearch(key: string, engine: Engine, o: EngineOpts, budget: number, h: SearchHandlers): void {
+export function startSearch(
+  key: string,
+  engine: Engine,
+  o: EngineOpts,
+  budget: number,
+  h: SearchHandlers,
+): void {
   if (!worker) {
-    worker = new Worker(new URL('./search.worker.ts', import.meta.url), { type: 'module' });
+    worker = new Worker(new URL("./search.worker.ts", import.meta.url), { type: "module" });
     sent.clear();
   }
   const msg: SearchRequest = { key, o, budget };
@@ -22,14 +28,17 @@ export function startSearch(key: string, engine: Engine, o: EngineOpts, budget: 
     msg.engine = engine;
     sent.add(key);
   }
+  // Assigned rather than added: each search replaces the previous search's handlers.
+  // oxlint-disable-next-line unicorn/prefer-add-event-listener
   worker.onmessage = (ev: MessageEvent<WorkerMessage>) => {
     const m = ev.data;
-    if (m.type === 'progress') h.onProgress(m.frac, m.best);
+    if (m.type === "progress") h.onProgress(m.frac, m.best);
     else h.onDone(m.results);
   };
+  // oxlint-disable-next-line unicorn/prefer-add-event-listener
   worker.onerror = (ev) => {
     cancelSearch();
-    h.onError(ev.message || 'The search worker crashed.');
+    h.onError(ev.message || "The search worker crashed.");
   };
   worker.postMessage(msg);
 }
