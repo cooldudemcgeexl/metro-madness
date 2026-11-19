@@ -135,8 +135,10 @@ export const useAppStore = create<AppState>()(
           }
           if (isOk(plans[id]) && !ids.includes(id)) ids.push(id);
         }
+        // A search the user started replaces the comparisons with its own top runs. The automatic
+        // search on load keeps comparisons restored from the last visit, filling in only if none.
         let { compare, slots } = s;
-        if (auto && !compare.length) {
+        if (!auto || !compare.length) {
           compare = ids.slice(0, MAX_COMPARE);
           slots = Object.fromEntries(compare.map((id, i) => [id, i]));
         }

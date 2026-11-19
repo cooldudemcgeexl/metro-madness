@@ -14,7 +14,7 @@ import { useShownPlans } from "../hooks/useShownPlans.ts";
 import { fmt, fmtS } from "../lib/format.ts";
 import { fitView, pathD, px, segPoints, type ViewBox } from "../lib/geo.ts";
 import type { Visit } from "@metro-madness/router";
-import { planName, reqHubs, shortName, type OkPlan } from "../lib/plan.ts";
+import { hubTitle, planName, reqHubs, shortName, type OkPlan } from "../lib/plan.ts";
 import { slotColor, useAppStore, usePlanColor } from "../store/useAppStore.ts";
 import { useTooltip } from "../store/useTooltip.ts";
 import { Panel } from "./Panel.tsx";
@@ -149,7 +149,7 @@ export function MapPanel() {
             dragging ? "cursor-grabbing" : "cursor-grab",
           )}
           role="img"
-          aria-label="Map of Metro transit centers and the compared runs"
+          aria-label="Map of Metro transit centers, MetroLink stations and the compared runs"
           viewBox={vb ? `${vb.x} ${vb.y} ${vb.w} ${vb.h}` : undefined}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -334,7 +334,7 @@ function HubMarkers({ common: C, k, drawn, colorOf }: HubMarkersProps) {
     const sp = day?.span[i];
     return (
       <>
-        <b>{h.name} Transit Center</b> ({h.state}){h.official ? "" : " · unlisted"}
+        <b>{hubTitle(h)}</b> ({h.state}){h.official ? "" : " · unlisted"}
         {req.has(i) ? "" : " · not included"}
         <br />
         <span style={{ opacity: 0.75 }}>

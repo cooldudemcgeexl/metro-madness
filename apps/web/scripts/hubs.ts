@@ -1,18 +1,32 @@
-// Metro St. Louis transit centers, per metrostlouis.org/system-maps/addresses
-// ("Metro Transit Centers" entries whose name is "... Transit Center").
-// Each hub lists the GTFS stop_ids that count as "being at" that center:
-// its bus bays plus the MetroLink platform where there is one.
-// `official: false` hubs are extra stops named "Transit Center" in the GTFS feed
-// that Metro's address page does not list. They are optional in the planner.
+// The places a Metro St. Louis run must visit ("hubs"):
+// - Transit centers, per metrostlouis.org/system-maps/addresses ("Metro Transit Centers" entries
+//   whose name is "... Transit Center"), plus Grand and UMSL South, which the GTFS feed names as
+//   transit centers.
+// - Every MetroLink station that isn't already part of a transit center (`station: true`).
+// Each hub lists the GTFS stop_ids that count as "being at" it: a transit center's bus bays plus
+// its MetroLink platform where there is one, or a station's platform.
+// `official: false` hubs are left out of the default set and can be opted into in the planner.
 
 export interface HubDef {
   id: string;
   name: string;
   state: "MO" | "IL";
   official: boolean;
+  /** A MetroLink station rather than a transit center. */
+  station?: boolean;
   /** GTFS stop_ids */
   stops: string[];
 }
+
+/** A MetroLink station hub: just its platform. */
+const station = (id: string, name: string, state: "MO" | "IL", platform: string): HubDef => ({
+  id,
+  name,
+  state,
+  official: true,
+  station: true,
+  stops: [platform],
+});
 
 const MISSOURI: HubDef[] = [
   // ---- Missouri ----
@@ -158,6 +172,20 @@ const MISSOURI: HubDef[] = [
     official: false,
     stops: ["2908"],
   },
+  // ---- MetroLink stations that aren't transit centers ----
+  station("LT1", "Lambert Airport Terminal 1", "MO", "10634"),
+  station("LT2", "Lambert Airport Terminal 2", "MO", "10633"),
+  station("UMN", "UMSL North", "MO", "10631"),
+  station("SKN", "Skinker", "MO", "14761"),
+  station("UCB", "University City-Big Bend", "MO", "14760"),
+  station("FOR", "Forsyth", "MO", "14759"),
+  station("SUN", "Sunnen", "MO", "14754"),
+  station("CTX", "Cortex", "MO", "16149"),
+  station("UNS", "Union Station", "MO", "10623"),
+  station("STD", "Stadium", "MO", "13662"),
+  station("8PN", "8th & Pine", "MO", "10620"),
+  station("CNV", "Convention Center", "MO", "10619"),
+  station("LCL", "Laclede's Landing", "MO", "10618"),
 ];
 
 export const ILLINOIS: HubDef[] = [
@@ -232,6 +260,8 @@ export const ILLINOIS: HubDef[] = [
     official: true,
     stops: ["14125", "10601"],
   },
+  // ---- MetroLink stations that aren't transit centers ----
+  station("ERF", "East Riverfront", "IL", "10617"),
 ];
 
 export const HUBS: HubDef[] = [...MISSOURI, ...ILLINOIS];

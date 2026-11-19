@@ -16,7 +16,7 @@ import {
   type TourObjective,
   type TourOptions,
 } from "@metro-madness/router";
-import type { Common, DayData } from "../data/types.ts";
+import type { Common, DayData, Hub } from "../data/types.ts";
 import { dur, fmt, fmtS, parseHHMM, titleCase } from "./format.ts";
 
 export interface Settings {
@@ -182,7 +182,13 @@ export const shortName = (n: string) =>
     .replace("Shrewsbury-Lansdowne I-44", "Shrewsbury")
     .replace("Forest Park-DeBaliviere", "Forest Park")
     .replace("Maplewood-Manchester", "Maplewood")
-    .replace("Lockwood @ Rock Hill", "Lockwood");
+    .replace("Lockwood @ Rock Hill", "Lockwood")
+    .replace("Lambert Airport Terminal ", "Lambert T")
+    .replace("University City-Big Bend", "U City-Big Bend");
+
+/** "Clayton Transit Center", "Forsyth MetroLink station" */
+export const hubTitle = (hub: Hub) =>
+  `${hub.name} ${hub.kind === "station" ? "MetroLink station" : "Transit Center"}`;
 
 export const towards = (h: string) =>
   titleCase(h.replace(/^(RED|BLUE) LINE TO /, "").replace(/^TO /, ""));
@@ -193,7 +199,9 @@ export function routeLabel(C: Common, ri: number): string {
 }
 
 export function stopName(C: Common, ref: Place): string {
-  return "hub" in ref ? `${C.hubs[ref.hub].name} TC` : titleCase(C.stops[ref.stop][0]);
+  if (!("hub" in ref)) return titleCase(C.stops[ref.stop][0]);
+  const hub = C.hubs[ref.hub];
+  return `${hub.name} ${hub.kind === "station" ? "station" : "TC"}`;
 }
 
 /** Plain-text run sheet for the clipboard. */

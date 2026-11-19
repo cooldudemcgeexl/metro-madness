@@ -118,7 +118,7 @@ origin, giving the journey's legs.
 **Speed details.**
 
 - **No clearing between queries:** the build runs one query per (hub, useful departure time),
-  about 38,000 for Metro St. Louis. Instead of clearing the working arrays each time, entries are
+  about 48,000 for Metro St. Louis. Instead of clearing the working arrays each time, entries are
   stamped with a _generation_ number and treated as unset when the stamp is stale.
 - **Early exit:** a query stops once connections depart more than `maxJourneySeconds` (5 h) after
   the start. Every 1,024 connections it also checks whether all hubs are reached and the current
@@ -140,8 +140,8 @@ It is built per origin hub (`profiles/dayProfiles.ts`) in three steps:
    ties, so the list is reduced to a strict **Pareto front**: departures and arrivals both
    strictly increase.
 
-Each profile entry is `[departure, arrival, leg ids]`. On Metro St. Louis's 31 hubs this gives
-about 50,000 entries per weekday, roughly 54 per hub pair.
+Each profile entry is `[departure, arrival, leg ids]`. On Metro St. Louis's 45 hubs this gives
+about 111,000 entries per weekday, roughly 56 per hub pair.
 
 ### 3.7 Encoding journeys
 
@@ -149,8 +149,8 @@ Journeys are stored as lists of **leg ids** (`profiles/legTable.ts`). A leg is o
 trip, or one transfer walk.
 
 - **Interning:** many journeys share legs (the same bus from the same stop at the same time), so
-  each distinct leg is stored once per day and referenced by index. On Metro this is ~34,000 legs
-  for ~108,000 references.
+  each distinct leg is stored once per day and referenced by index. On a Metro weekday this is ~69,000
+  legs for ~222,000 references.
 - **Hubs on the way:** each leg lists every hub it stops at, with the minute it is there
   (`hubPasses`). This is how ride-throughs are detected later, and the set of hubs a journey
   touches is derived from it when the dataset is decoded.
@@ -331,8 +331,8 @@ connection cascades.
 - **Heuristic search.** Results are very good but not proven optimal. A longer budget can shave
   minutes. The search keeps one tour per start hub, not the k best overall.
 - **Scaling with hub count.** Profiles exist for every ordered hub pair, so the dataset grows with
-  the square of the number of hubs. 31 hubs is about 3.5 MB of JSON per day; 300 hubs would be
-  about a hundred times that, and builds take proportionally longer (one CSA query per hub per
+  the square of the number of hubs. Metro's 45 hubs come to about 9 MB of JSON per day (1.5 MB
+  gzipped); 450 hubs would be about a hundred times that, and builds take proportionally longer (one CSA query per hub per
   useful departure). Systems with hundreds of hubs need a more compact profile format (binary
   instead of JSON, or profiles computed on demand), which is a natural next step. The coverage
   fingerprint itself is exact up to 8,192 hubs.

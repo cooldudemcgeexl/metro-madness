@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { buildDataset, readGtfsFeed, type ServiceDayDefinition } from "@metro-madness/router/build";
+import type { MetroHubAttributes } from "../src/data/types.ts";
 import { HUBS } from "./hubs.ts";
 
 /** When data/gtfs_raw was downloaded from Metro. Update this when replacing the feed. */
@@ -41,11 +42,15 @@ const feed = readGtfsFeed((fileName) => {
 
 console.time("build");
 const { common, days } = buildDataset(feed, {
-  hubs: HUBS.map(({ id, name, state, official, stops }) => ({
+  hubs: HUBS.map(({ id, name, state, official, station, stops }) => ({
     id,
     name,
     stopIds: stops,
-    attributes: { state, official },
+    attributes: {
+      state,
+      official,
+      kind: station ? "station" : "transit-center",
+    } satisfies MetroHubAttributes,
   })),
   days: DAYS,
   downloadedOn: FEED_DOWNLOADED_ON,

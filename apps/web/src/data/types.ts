@@ -10,7 +10,11 @@ export interface MetroHubAttributes {
   state: "MO" | "IL";
   /** Counted by default; unofficial centers can be opted into. */
   official: boolean;
+  kind: HubKind;
 }
+
+/** A transit center (bus bays, often a MetroLink platform too) or a MetroLink-only station. */
+export type HubKind = "transit-center" | "station";
 
 export type CommonFileData = CommonFile<MetroHubAttributes>;
 export type Common = CommonData<MetroHubAttributes>;

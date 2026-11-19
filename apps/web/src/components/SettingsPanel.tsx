@@ -183,7 +183,7 @@ export function SettingsPanel() {
         </div>
         <output className="block min-h-[1.4em] text-xs text-muted">
           {tooFew && !searching
-            ? `Pick at least two transit centers with ${day?.label.toLowerCase() ?? ""} service.`
+            ? `Pick at least two centers or stations with ${day?.label.toLowerCase() ?? ""} service.`
             : status}
         </output>
       </form>

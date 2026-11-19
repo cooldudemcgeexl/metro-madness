@@ -13,6 +13,7 @@ interface Group {
 
 function groupsOf(C: Common): Group[] {
   const byName = (a: number, b: number) => C.hubs[a].name.localeCompare(C.hubs[b].name);
+  const isOfficialCenter = (i: number) => C.hubs[i].official && C.hubs[i].kind !== "station";
   const pick = (f: (i: number) => boolean) =>
     C.hubs
       .map((_, i) => i)
@@ -21,13 +22,19 @@ function groupsOf(C: Common): Group[] {
   return [
     {
       key: "MO",
-      label: "Missouri",
-      hubs: pick((i) => C.hubs[i].official && C.hubs[i].state === "MO"),
+      label: "Missouri transit centers",
+      hubs: pick((i) => isOfficialCenter(i) && C.hubs[i].state === "MO"),
     },
     {
       key: "IL",
-      label: "Illinois",
-      hubs: pick((i) => C.hubs[i].official && C.hubs[i].state === "IL"),
+      label: "Illinois transit centers",
+      hubs: pick((i) => isOfficialCenter(i) && C.hubs[i].state === "IL"),
+    },
+    {
+      key: "station",
+      label: "MetroLink stations",
+      note: "Stations that aren't part of a transit center.",
+      hubs: pick((i) => C.hubs[i].official && C.hubs[i].kind === "station"),
     },
     {
       key: "other",
@@ -38,7 +45,7 @@ function groupsOf(C: Common): Group[] {
   ].filter((g) => g.hubs.length);
 }
 
-/** Pick which transit centers the run must visit. */
+/** Pick which transit centers and stations the run must visit. */
 export function CenterPicker() {
   const common = useAppStore((s) => s.common);
   const centers = useAppStore((s) => s.settings.centers);
@@ -58,6 +65,9 @@ export function CenterPicker() {
     if (!next.delete(i)) next.add(i);
     commit(next);
   };
+  /** Every official hub (transit centers and stations) in one state; excludes unofficial ones like Lockwood. */
+  const officialIn = (state: "MO" | "IL") =>
+    new Set(C.hubs.flatMap((hub, index) => (hub.official && hub.state === state ? [index] : [])));
   const setMany = (hubs: number[], on: boolean) => {
     const next = new Set(selected);
     hubs.forEach((i) => (on ? next.add(i) : next.delete(i)));
@@ -78,7 +88,7 @@ export function CenterPicker() {
             "before:inline-block before:w-[1em] before:text-muted before:transition-transform before:content-['▸'] group-open:before:rotate-90",
           )}
         >
-          Transit centers
+          Centers &amp; stations
         </span>
         <span className={note}>
           {selected.size} of {C.hubs.length} selected
@@ -100,6 +110,20 @@ export function CenterPicker() {
         </Button>
         <Button variant="ghost" onClick={() => setSettings({ centers: null })}>
           Official
+        </Button>
+        <Button
+          variant="ghost"
+          title="Only Missouri's official transit centers and MetroLink stations"
+          onClick={() => commit(officialIn("MO"))}
+        >
+          Missouri
+        </Button>
+        <Button
+          variant="ghost"
+          title="Only Illinois's official transit centers and MetroLink stations"
+          onClick={() => commit(officialIn("IL"))}
+        >
+          Illinois
         </Button>
         <Button variant="ghost" onClick={() => commit(new Set())}>
           None
